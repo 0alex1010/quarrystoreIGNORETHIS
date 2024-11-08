@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Quarry - Item Manager</title>
+  <style>
+    body {
+      background-color: #e0e0e0;
+      font-family: Arial, sans-serif;
+      color: #000080;
+    }
+
+    .title-bar {
+      background-color: #000080;
+      color: #ffffff;
+      padding: 5px;
+      font-weight: bold;
+    }
+
+    .title-bar h1 {
+      margin: 0;
+    }
+
+    .menu-bar {
+      background-color: #c0c0c0;
+      padding: 5px;
+    }
+
+    .menu-bar ul {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .menu-bar li {
+      display: inline;
+      margin-right: 15px;
+    }
+
+    .menu-bar a {
+      color: #000080;
+      text-decoration: none;
+    }
+
+    .tool-bar {
+      background-color: #f0f0f0;
+      padding: 5px;
+    }
+
+    .tool-bar button {
+      background-color: #ffffff;
+      color: #000080;
+      border: 1px solid #c0c0c0;
+      padding: 5px 10px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+
+    .item-list {
+      margin-top: 10px;
+      border: 1px solid #c0c0c0;
+    }
+
+    .item-list th, .item-list td {
+      border: 1px solid #c0c0c0;
+      padding: 5px;
+    }
+
+    .details-pane {
+      margin-top: 10px;
+      border: 1px solid #c0c0c0;
+      padding: 10px;
+    }
+
+    .status-bar {
+      background-color: #c0c0c0;
+      padding: 5px;
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    /* Input Field Styles (Add these for user input) */
+    input[type="text"], input[type="number"], select {
+      padding: 5px;
+      margin-bottom: 5px;
+      border: 1px solid #c0c0c0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="title-bar">
+    <h1>The Quarry - Item Manager</h1>
+  </div>
+
+  <div class="menu-bar">
+    <ul>
+      <li><a href="#">File</a></li>
+      <li><a href="#">Edit</a></li>
+      <li><a href="#">View</a></li>
+      <li><a href="#">Help</a></li>
+    </ul>
+  </div>
+
+  <div class="tool-bar">
+    <button onclick="addItem()">Add Item</button>
+    <button onclick="saveItems()">Save</button>
+    <button onclick="loadItems()">Load</button>
+    <button onclick="switchMode()">Switch Mode</button>
+  </div>
+
+  <div id="managerMode">
+    <div class="item-list">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Category</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="itemTableBody">
+        </tbody>
+      </table>
+    </div>
+
+    <div class="details-pane" id="detailsPane">
+      <h2>Item Details</h2>
+      <p>
+        <strong>Name:</strong> <span id="itemName"></span><br>
+        <strong>Description:</strong> <span id="itemDescription"></span><br>
+        <strong>Price:</strong> <span id="itemPrice"></span><br>
+        <strong>Quantity:</strong> <span id="itemQuantity"></span><br>
+        <strong>Category:</strong> <span id="itemCategory"></span>
+      </p>
+    </div>
+  </div>
+
+  <div id="customerMode" style="display: none;">
+    <!-- Customer View Content -->
+    <h2>Welcome to The Quarry!</h2>
+    <p>Browse our selection of items:</p>
+    <div class="item-list">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Category</th>
+          </tr>
+        </thead>
+        <tbody id="customerTableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <span>Current Item: </span><span id="currentItem"></span>
+    <span>Total Items: </span><span id="totalItems"></span>
+  </div>
+
+  <!-- Input fields for adding/editing items -->
+  <div>
+    <label for="itemNameInput">Name:</label>
+    <input type="text" id="itemNameInput">
+    <br>
+    <label for="itemDescriptionInput">Description:</label>
+    <textarea id="itemDescriptionInput"></textarea>
+    <br>
+    <label for="itemPriceInput">Price:</label>
+    <input type="number" id="itemPriceInput">
+    <br>
+    <label for="itemQuantityInput">Quantity:</label>
+    <input type="number" id="itemQuantityInput">
+    <br>
+    <label for="itemCategoryInput">Category:</label>
+    <select id="itemCategoryInput">
+      <option value="Category 1">Category 1</option>
+      <option value="Category 2">Category 2</option>
+      <!-- Add more categories as needed -->
+    </select>
+  </div>
+
+  <script>
+    // Load items from cookies on page load
+    window.onload = loadItems();
+
+    let currentMode = "manager"; // Default mode is manager
+
+    // Function to add an item to the list
+    function addItem() {
+      // Get item details from user input
+      const name = document.getElementById("itemNameInput").value;
+      const description = document.getElementById("itemDescriptionInput").value;
+      const price = document.getElementById("itemPriceInput").value;
+      const quantity = document.getElementById("itemQuantityInput").value;
+      const category = document.getElementById("itemCategoryInput").value;
+
+      // Create a new item object
+      const newItem = {
+        name: name,
+        description: description,
+        price: price,
+        quantity: quantity,
+        category: category
+      };
+
+      // Add the item to the list
+      addItemToList(newItem);
+      saveItems(); // Save the updated list to cookies
+    }
+
+    // Function to add an item to the list table
+    function addItemToList(item) {
+      const tableBody = document.getElementById("itemTableBody");
+      const newRow = tableBody.insertRow();
+      newRow.insertCell().textContent = item.name;
+      newRow.insertCell().textContent = item.description;
+      newRow.insertCell().textContent = item.price;
+      newRow.insertCell().textContent = item.quantity;
+      newRow.insertCell().textContent = item.category;
+
+      // Add edit and remove buttons
+      const actionsCell = newRow.insertCell();
+      const editButton = document.createElement("button");
+      editButton.textContent = "Edit";
+      editButton.onclick = function() {
+        editItem(item);
+      };
+      const removeButton = document.createElement("button");
+      removeButton.textContent = "Remove";
+      removeButton.onclick = function() {
+        removeItem(item);
+      };
+      actionsCell.appendChild(editButton);
+      actionsCell.appendChild(removeButton);
+    }
+
+    // Function to edit an existing item
+    function editItem(item) {
+      // Update input fields with the item's details
+      document.getElementById("itemNameInput").value = item.name;
+      document.getElementById("itemDescriptionInput").value = item.description;
+      document.getElementById("itemPriceInput").value = item.price;
+      document.getElementById("itemQuantityInput").value = item.quantity;
+      document.getElementById("itemCategoryInput").value = item.category;
+
+      // Add a "Save Changes" button (or replace "Add Item" button)
+      // ...
+    }
+
+    // Function to remove an item from the list
+    function removeItem(item) {
+      // Find the row in the table that corresponds to the item
+      const tableBody = document.getElementById("itemTableBody");
+      for (let i = 0; i < tableBody.rows.length; i++) {
+        const row = tableBody.rows[i];
+        if (row.cells[0].textContent === item.name) {
+          tableBody.deleteRow(i);
+          break;
+        }
+      }
+      saveItems(); // Save the updated list to cookies
+    }
+
+    // Function to save the items to cookies
+    function saveItems() {
+      // Get the items from the list table
+      const items = [];
+      const tableBody = document.getElementById("itemTableBody");
+      for (let i = 0; i < tableBody.rows.length; i++) {
+        const row = tableBody.rows[i];
+        const item = {
+          name: row.cells[0].textContent,
+          description: row.cells[1].textContent,
+          price: row.cells[2].textContent,
+          quantity: row.cells[3].textContent,
+          category: row.cells[4].textContent
+        };
+        items.push(item);
+      }
+
+      // Convert the items array to a JSON string
+      const itemsJSON = JSON.stringify(items);
+
+      // Store the JSON string in a cookie
+      document.cookie = "items=" + itemsJSON;
+    }
+
+    // Function to load items from cookies
+    function loadItems() {
+      // Get the cookie value
+      const cookies = document.cookie.split(';');
+      let itemsJSON = null;
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith("items=")) {
+          itemsJSON = cookie.substring(6);
+          break;
+        }
+      }
+
+      // If items are found in cookies, load them into the list
+      if (itemsJSON) {
+        const items = JSON.parse(itemsJSON);
+        for (let i = 0; i < items.length; i++) {
+          addItemToList(items[i]);
+        }
+      }
+    }
+
+    // Function to switch between manager and customer modes
+    function switchMode() {
+      if (currentMode === "manager") {
+        document.getElementById("managerMode").style.display = "none";
+        document.getElementById("customerMode").style.display = "block";
+        currentMode = "customer";
+      } else {
+        document.getElementById("customerMode").style.display = "none";
+        document.getElementById("managerMode").style.display = "block";
+        currentMode = "manager";
+      }
+    }
+
+    // Function to display items in customer mode
+    function displayItemsInCustomerMode() {
+      const tableBody = document.getElementById("customerTableBody");
+      tableBody.innerHTML = ""; // Clear previous items
+      const items = JSON.parse(document.cookie.split(';').find(cookie => cookie.trim().startsWith('items=')).substring(6));
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        const newRow = tableBody.insertRow();
+        newRow.insertCell().textContent = item.name;
+        newRow.insertCell().textContent = item.description;
+        newRow.insertCell().textContent = item.price;
+        newRow.insertCell().textContent = item.category;
+      }
+    }
+
+    // Add an event listener to switch to customer mode when a user selects an item
+    const itemTableBody = document.getElementById("itemTableBody");
+    itemTableBody.addEventListener('click', (event) => {
+      if (currentMode === 'manager' && event.target.tagName === 'TD' && event.target.parentElement.tagName === 'TR') {
+        switchMode();
+        displayItemsInCustomerMode();
+      }
+    });
+  </script>
+
+</body>
+</html>
